@@ -6,7 +6,6 @@ from sklearn.metrics import mutual_info_score
 from cutset_network import CutsetNetworkNode, LeafNode, OrNode
 from dataset import Dataset
 
-
 def learn_chow_liu_leaf(D: Dataset) -> LeafNode:
     df = D.as_df()
     dag = TreeSearch(df).estimate(estimator_type="chow-liu")
@@ -28,7 +27,7 @@ def select_mi_cut(D: Dataset):
     i = scores.argmax()
     return D.scope[i]
 
-def learn_structure(D: Dataset, learn_leaf, select_best_cut, min_variables: int = 5) -> CutsetNetworkNode:
+def learn_structure(D: Dataset, learn_leaf, select_best_cut, Estimator, min_variables: int = 5) -> CutsetNetworkNode:
     if len(D.scope) < min_variables:
         leaf = learn_leaf(D)
         return leaf 
@@ -38,6 +37,10 @@ def learn_structure(D: Dataset, learn_leaf, select_best_cut, min_variables: int 
             leaf = learn_leaf(D)
             return leaf 
         else:
+            Ds = D.split(best_cut)
             children = [learn_structure(Di, learn_leaf) 
-                        for Di in D.split(best_cut)]
-            return OrNode(D.scope, D.r, best_cut, children)
+                        for Di in Ds]
+            est = Estimator(D)
+            p = est.probabilty(best_cut)
+            weights = np.array([p[value] for value in range(D.r[best_cut])])
+            return OrNode(D.scope, D.r, best_cut, weights, children)

@@ -11,7 +11,7 @@ class ProbabilityEstimator:
         self.D = D 
         self.s = s
 
-    def joint(self, variables: List[str]):
+    def probability(self, variables: List[str]):
         counts = self.D.counts(variables)
         total = counts.values().sum()
         M = np.prod([self.D.r[v] for v in variables])
@@ -21,8 +21,8 @@ class ProbabilityEstimator:
         return defaultdict(lambda: default, prob)
     
     def conditional(self, variable: str, parents: List[str]):
-        numerator = self.joint([variable, *parents])
-        denominator = self.joint(parents)
+        numerator = self.probability([variable, *parents])
+        denominator = self.probability(parents)
 
         parent_shape = [self.D.r[each] for each in parents]
         prob = np.zeros(np.prod(parent_shape), self.D.r[variable])
